@@ -35,6 +35,7 @@ class Msf::WebServices::MetasploitApiApp < Sinatra::Base
   configure do
     set :sessions, {key: 'msf-ws.session', expire_after: 300}
     set :session_secret, ENV.fetch('MSF_WS_SESSION_SECRET') { SecureRandom.hex(32) }
+    set :api_token, ENV.fetch('MSF_WS_JSON_RPC_API_TOKEN', nil)
   end
 
   before do
@@ -42,6 +43,11 @@ class Msf::WebServices::MetasploitApiApp < Sinatra::Base
     request.env['msf.db_manager'] = get_db
     # store flag indicating whether authentication is initialized in the request environment
     @@auth_initialized ||= get_db.users({}).count > 0
+    # when API token is set in env, require it (same as JSON-RPC app)
+    if !settings.api_token.nil? && !settings.api_token.empty?
+      @@auth_initialized = true
+      request.env['msf.api_token'] = settings.api_token
+    end
     request.env['msf.auth_initialized'] = @@auth_initialized
   end
 

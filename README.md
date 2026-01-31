@@ -43,6 +43,22 @@ To get started with Metasploit:
 2. **Explore Resources:** 
    - Visit the [Using Metasploit](https://docs.metasploit.com/docs/using-metasploit/getting-started/index.html) section of the documentation.
 
+## Web UI C2 Server
+
+This repository includes a Docker-based web UI for Metasploit Framework Command & Control operations. **Everything runs with Docker Compose**—no need to install Node, PostgreSQL, or Metasploit locally.
+
+### Quick Start (Docker Compose only)
+
+1. **Start the full stack** (database, Metasploit, web UI, docs, nginx):
+   ```bash
+   docker compose up -d --build
+   ```
+2. **Open the web UI:** http://localhost
+
+No API token is required by default (works like the CLI). For optional auth or custom settings, copy `.env.example` to `.env` and set `MSF_WS_JSON_RPC_API_TOKEN` if desired.
+
+For detailed setup, troubleshooting, and dev mode, see [WEB_UI_SETUP.md](WEB_UI_SETUP.md).
+
 ## Contributing
 
 To contribute to Metasploit:

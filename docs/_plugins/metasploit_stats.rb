@@ -52,7 +52,9 @@ class MetasploitStats
 
     module_metadata_path = '../db/modules_metadata_base.json'
     unless File.exist?(module_metadata_path)
-      raise "Unable to find Metasploit module data, expected it to be at #{module_metadata_path}"
+      Jekyll.logger.warn 'Metasploit Stats:', "Module data not found at #{module_metadata_path}, using empty set"
+      @modules = []
+      return @modules
     end
 
     @modules = JSON.parse(File.binread(module_metadata_path)).values

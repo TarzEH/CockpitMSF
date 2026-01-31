@@ -1,0 +1,16 @@
+services:
+  web-ui:
+    build:
+      context: ./web-ui
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./web-ui:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: npm run dev
+
+  ms:
+    volumes:
+      - .:/usr/src/metasploit-framework
+      - $HOME/.msf4:/home/msf/.msf4

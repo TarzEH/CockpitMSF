@@ -18,7 +18,8 @@ module Msf::WebServices::MsfServlet
 
   def self.get_msf_version
     lambda {
-      warden.authenticate!
+      # Require auth only when authentication is initialized (users exist or API token set)
+      warden.authenticate! if request.env['msf.auth_initialized']
       begin
         set_json_data_response(response: { metasploit_version: Metasploit::Framework::VERSION })
       rescue => e

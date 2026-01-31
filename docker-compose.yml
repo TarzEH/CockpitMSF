@@ -1,14 +1,25 @@
 services:
   ms:
-    image: metasploitframework/metasploit-framework:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: metasploit:dev
     environment:
       DATABASE_URL: postgres://postgres@db:5432/msf?pool=200&timeout=5
+      MSF_WS_SESSION_SECRET: ${MSF_WS_SESSION_SECRET:-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2}
+      # Leave MSF_WS_JSON_RPC_API_TOKEN unset to work without authentication (like CLI)
+      # MSF_WS_JSON_RPC_API_TOKEN: ${MSF_WS_JSON_RPC_API_TOKEN:-}
     links:
       - db
     ports:
       - 4444:4444
+      - 8080:8080  # REST API
+      - 8081:8081  # JSON-RPC API
     volumes:
       - $HOME/.msf4:/home/msf/.msf4
+    command: docker/start-web-services.sh
+    depends_on:
+      - db
 
   db:
     image: postgres:10-alpine
@@ -16,6 +27,48 @@ services:
       - pg_data:/var/lib/postgresql/data
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: msf
+    ports:
+      - 5432:5432
+
+  web-ui:
+    build:
+      context: ./web-ui
+      dockerfile: Dockerfile
+    ports:
+      - 3000:80
+    # Vite uses VITE_* env vars at build time; relative /api/v1 and /rpc work when served behind nginx
+    environment:
+      VITE_API_BASE_URL: /api/v1
+      VITE_RPC_BASE_URL: /rpc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # No longer depends on ms service - uses local Metasploit instead
+
+  docs-service:
+    build:
+      context: .
+      dockerfile: ./docs-service/Dockerfile
+    ports:
+      - 4000:4000
+    volumes:
+      - ./docs:/usr/src/docs
+    working_dir: /usr/src/docs
+    command: sh -c "bundle install && bundle exec jekyll serve --host 0.0.0.0 --port 4000"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - web-ui
+      - docs-service
+      - ms
 
 volumes:
   pg_data:
